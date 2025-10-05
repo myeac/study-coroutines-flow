@@ -19,6 +19,7 @@ class Perform2SequentialNetworkRequestsViewModel(
                 val featuresMostRecentVersion = mockApi.getAndroidVersionFeatures(mostRecentVersion.apiLevel)
                 uiState.value = UiState.Success(featuresMostRecentVersion)
             } catch (exception: Exception) {
+                exception.message
                 uiState.value = UiState.Error("Error en la solicitacion")
             }
         }
