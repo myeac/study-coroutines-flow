@@ -8,6 +8,11 @@ class PerformSingleNetworkRequestViewModel(
 ) : BaseViewModel<UiState>() {
 
     fun performSingleNetworkRequest() {
+        //alternar entre cualquiera de estos estados
+        uiState.value = UiState.Loading
 
+        uiState.value = UiState.Error("Algo malo paso!!! :c")
+
+        uiState.value= UiState.Success(listOf())
     }
 }
