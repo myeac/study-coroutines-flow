@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import com.lukaslechner.coroutineusecasesonandroid.base.BaseViewModel
 import com.lukaslechner.coroutineusecasesonandroid.mock.MockApi
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 class Perform2SequentialNetworkRequestsViewModel(
     private val mockApi: MockApi = mockApi()
@@ -19,7 +20,7 @@ class Perform2SequentialNetworkRequestsViewModel(
                 val featuresMostRecentVersion = mockApi.getAndroidVersionFeatures(mostRecentVersion.apiLevel)
                 uiState.value = UiState.Success(featuresMostRecentVersion)
             } catch (exception: Exception) {
-                exception.message
+                Timber.e(exception)
                 uiState.value = UiState.Error("Error en la solicitacion")
             }
         }
