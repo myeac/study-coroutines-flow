@@ -19,31 +19,31 @@ class CalculationInSeveralCoroutinesViewModel(
         numberOfCoroutines: Int
     ) {
         uiState.value = UiState.Loading
+
         viewModelScope.launch {
 
-            var factorialResult = BigInteger.ZERO
-            val computationDuration = measureTimeMillis {
-                factorialResult =
-                    factorialCalculator.calculateFactorial(
-                        factorialOf,
-                        numberOfCoroutines
-                    )
-            }
-
-            var resultString = ""
-            val stringConversionDuration = measureTimeMillis {
-                resultString = convertToString(factorialResult)
-            }
-
-            uiState.value =
-                UiState.Success(resultString, computationDuration, stringConversionDuration)
+        var factorialResult = BigInteger.ZERO
+        val computationDuration = measureTimeMillis {
+            factorialResult =
+                factorialCalculator.calculateFactorial(
+                    factorialOf,
+                    numberOfCoroutines
+                )
         }
+
+        var resultString = ""
+        val stringConversionDuration = measureTimeMillis {
+            resultString = convertToString(factorialResult)
+        }
+
+        uiState.value =
+            UiState.Success(resultString, computationDuration, stringConversionDuration)
+        }
+
     }
 
-    private suspend fun convertToString(
-        number: BigInteger
-    ): String =
-        withContext(defaultDispatcher) {
-            number.toString()
-        }
+    // TODO: execute on background thread
+    private suspend fun convertToString(number: BigInteger): String = withContext(Dispatchers.Default){
+        number.toString()
+    }
 }
