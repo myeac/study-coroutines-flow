@@ -28,7 +28,7 @@ class SequentialNetworkRequestsRxViewModel(
                     uiState.value = UiState.Success(featureVersions)
                 },
                 onError = {
-                    uiState.value = UiState.Error("Solicitacion fallo!!")
+                    uiState.value = UiState.Error("Network Request failed.")
                 }
             )
             .addTo(disposables)
@@ -38,5 +38,4 @@ class SequentialNetworkRequestsRxViewModel(
         super.onCleared()
         disposables.clear()
     }
-
 }

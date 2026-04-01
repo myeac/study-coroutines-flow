@@ -1,19 +1,21 @@
 package com.lukaslechner.coroutineusecasesonandroid.playground.coroutinebuilders
 
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
-fun main() {
-    GlobalScope.launch {
-        delay(500)
-        println("impreso con GlobalScope.launch")
+fun main() = runBlocking<Unit> {
+    val job = launch(start = CoroutineStart.LAZY) {
+        networkRequest()
+        println("result received")
     }
-    println("main ends")
+    delay(200)
+    job.start()
+    println("end of runBlocking")
 }
 
-/* output
-main ends
-
-Process finished with exit code 0
- */
+suspend fun networkRequest(): String {
+    delay(500)
+    return "Result"
+}

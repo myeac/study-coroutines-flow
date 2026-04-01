@@ -7,7 +7,6 @@ import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
-import timber.log.Timber
 
 class NetworkRequestWithTimeoutViewModel(
     private val api: MockApi = mockApi()
@@ -15,41 +14,41 @@ class NetworkRequestWithTimeoutViewModel(
 
     fun performNetworkRequest(timeout: Long) {
         uiState.value = UiState.Loading
-//        usingTimeOut(timeout)
-        usingTimeOutOrNull(timeout)
+        // usingWithTimeout(timeout)
+        usingWithTimeoutOrNull(timeout)
     }
 
-    private fun usingTimeOut(timeout: Long) {
+    private fun usingWithTimeout(timeout: Long) {
         viewModelScope.launch {
             try {
-                val recentAndroidVersion = withTimeout(timeout) {
+                val recentVersions = withTimeout(timeout) {
                     api.getRecentAndroidVersions()
                 }
-                uiState.value = UiState.Success(recentAndroidVersion)
-            } catch (timeOut: TimeoutCancellationException) {
-                uiState.value = UiState.Error("error Timeout en la solicitacion!!")
-            } catch (e: Exception) {
-                Timber.e(e)
-                uiState.value = UiState.Error("error en la solicitacion!")
+                uiState.value = UiState.Success(recentVersions)
+            } catch (timeoutCancellationException: TimeoutCancellationException) {
+                uiState.value = UiState.Error("Network Request timed out!")
+            } catch (exception: Exception) {
+                uiState.value = UiState.Error("Network Request failed!")
             }
         }
     }
 
-    private fun usingTimeOutOrNull(timeout: Long) {
+    private fun usingWithTimeoutOrNull(timeout: Long) {
         viewModelScope.launch {
             try {
-                val recentAndroidVersion = withTimeoutOrNull(timeout) {
+                val recentVersions = withTimeoutOrNull(timeout) {
                     api.getRecentAndroidVersions()
                 }
-                if (recentAndroidVersion != null) {
-                    uiState.value = UiState.Success(recentAndroidVersion)
+
+                if (recentVersions != null) {
+                    uiState.value = UiState.Success(recentVersions)
                 } else {
-                    uiState.value = UiState.Error("error en la solicitacion!")
+                    uiState.value = UiState.Error("Network Request timed out!")
                 }
-            } catch (e: Exception) {
-                Timber.e(e)
-                uiState.value = UiState.Error("error en la solicitacion!")
+            } catch (exception: Exception) {
+                uiState.value = UiState.Error("Network Request failed!")
             }
         }
     }
+
 }

@@ -15,53 +15,51 @@ class SequentialNetworkRequestsCallbacksViewModel(
     private var getAndroidFeaturesCall: Call<VersionFeatures>? = null
 
     fun perform2SequentialNetworkRequest() {
+
         uiState.value = UiState.Loading
 
         getAndroidVersionsCall = mockApi.getRecentAndroidVersions()
-        getAndroidVersionsCall?.enqueue(object : Callback<List<AndroidVersion>> {
+        getAndroidVersionsCall!!.enqueue(object : Callback<List<AndroidVersion>> {
+            override fun onFailure(call: Call<List<AndroidVersion>>, t: Throwable) {
+                uiState.value = UiState.Error("Network Request failed")
+            }
+
             override fun onResponse(
-                call: Call<List<AndroidVersion>?>,
-                response: Response<List<AndroidVersion>?>
+                call: Call<List<AndroidVersion>>,
+                response: Response<List<AndroidVersion>>
             ) {
                 if (response.isSuccessful) {
-                    val mostRecentVersions = response.body()!!.last()
-                    getAndroidFeaturesCall = mockApi.getAndroidVersionFeatures(mostRecentVersions.apiLevel)
-                    getAndroidFeaturesCall?.enqueue(object : Callback<VersionFeatures> {
+                    val mostRecentVersion = response.body()!!.last()
+                    getAndroidFeaturesCall =
+                        mockApi.getAndroidVersionFeatures(mostRecentVersion.apiLevel)
+                    getAndroidFeaturesCall!!.enqueue(object : Callback<VersionFeatures> {
+                        override fun onFailure(call: Call<VersionFeatures>, t: Throwable) {
+                            uiState.value = UiState.Error("Network Request failed")
+                        }
+
                         override fun onResponse(
-                            call: Call<VersionFeatures?>,
-                            response: Response<VersionFeatures?>
+                            call: Call<VersionFeatures>,
+                            response: Response<VersionFeatures>
                         ) {
                             if (response.isSuccessful) {
-                                val featuresOfMostRecentVersions = response.body()!!
-                                uiState.value = UiState.Success(featuresOfMostRecentVersions)
+                                val featuresOfMostRecentVersion = response.body()!!
+                                uiState.value = UiState.Success(featuresOfMostRecentVersion)
                             } else {
-                                uiState.value = UiState.Error("Error en la respuesta de las Novedades de Version: ${mostRecentVersions.apiLevel}!")
+                                uiState.value = UiState.Error("Network Request failed")
                             }
-                        }
-                        override fun onFailure(
-                            call: Call<VersionFeatures?>,
-                            response: Throwable
-                        ) {
-                            uiState.value = UiState.Error("Algo inesperado ocurrio!")
                         }
                     })
                 } else {
-                    uiState.value = UiState.Error("Error en la respuesta!")
+                    uiState.value = UiState.Error("Network Request failed")
                 }
-            }
-
-            override fun onFailure(
-                call: Call<List<AndroidVersion>?>,
-                response: Throwable
-            ) {
-                uiState.value = UiState.Error("Algo inesperado ocurrio!")
             }
         })
     }
 
     override fun onCleared() {
         super.onCleared()
-        getAndroidFeaturesCall?.cancel()
+
         getAndroidVersionsCall?.cancel()
+        getAndroidFeaturesCall?.cancel()
     }
 }

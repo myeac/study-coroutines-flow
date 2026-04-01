@@ -15,15 +15,3 @@ fun mockApi() =
                 1500
             )
     )
-
-//For Error
-fun mockApiError() =
-    createMockApi(
-        MockNetworkInterceptor()
-            .mock(
-                "http://localhost/recent-android-versions",
-                { "un error ha ocurrido gaaaaaaa" },
-                500,
-                1500
-            )
-    )

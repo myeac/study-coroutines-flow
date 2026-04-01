@@ -3,11 +3,7 @@ package com.lukaslechner.coroutineusecasesonandroid.usecases.coroutines.usecase7
 import androidx.lifecycle.viewModelScope
 import com.lukaslechner.coroutineusecasesonandroid.base.BaseViewModel
 import com.lukaslechner.coroutineusecasesonandroid.mock.MockApi
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.*
 import timber.log.Timber
 
 class TimeoutAndRetryViewModel(
@@ -19,55 +15,57 @@ class TimeoutAndRetryViewModel(
         val numberOfRetries = 2
         val timeout = 1000L
 
-        val oreoVersionDeferred = viewModelScope.async {
-            retryWithTimeOut(numberOfRetries, timeout) {
+        val oreoVersionsDeferred = viewModelScope.async {
+            retryWithTimeout(numberOfRetries, timeout) {
                 api.getAndroidVersionFeatures(27)
             }
         }
 
-        val pieVersionDeferred = viewModelScope.async {
-            retryWithTimeOut(numberOfRetries, timeout) {
-                api.getAndroidVersionFeatures(27)
+        val pieVersionsDeferred = viewModelScope.async {
+            retryWithTimeout(numberOfRetries, timeout) {
+                api.getAndroidVersionFeatures(28)
             }
         }
 
         viewModelScope.launch {
             try {
                 val versionFeatures = listOf(
-                    oreoVersionDeferred,
-                    pieVersionDeferred,
+                    oreoVersionsDeferred,
+                    pieVersionsDeferred
                 ).awaitAll()
+
                 uiState.value = UiState.Success(versionFeatures)
+
             } catch (e: Exception) {
                 Timber.e(e)
-                uiState.value = UiState.Error("error en la comunicacion servidor!!")
+                uiState.value = UiState.Error("Network Request failed")
             }
         }
     }
-}
 
-suspend fun <T> retryWithTimeOut(
-    numberOfTries: Int,
-    timeout: Long,
-    block: suspend () -> T
-) = retry(numberOfTries) {
-    withTimeout(timeout) {
-        block()
-    }
-}
-
-suspend fun <T> retry(
-    numberOfTries: Int,
-    delayBetweenRetries: Long = 100,
-    block: suspend () -> T
-): T {
-    repeat(numberOfTries) {
-        try {
-            return block()
-        } catch (e: Exception) {
-            Timber.e(e)
+    private suspend fun <T> retryWithTimeout(
+        numberOfRetries: Int,
+        timeout: Long,
+        block: suspend () -> T
+    ) = retry(numberOfRetries) {
+        withTimeout(timeout) {
+            block()
         }
-        delay(delayBetweenRetries)
     }
-    return block()
+
+    private suspend fun <T> retry(
+        numberOfRetries: Int,
+        delayBetweenRetries: Long = 100,
+        block: suspend () -> T
+    ): T {
+        repeat(numberOfRetries) {
+            try {
+                return block()
+            } catch (exception: Exception) {
+                Timber.e(exception)
+            }
+            delay(delayBetweenRetries)
+        }
+        return block() // last attempt
+    }
 }
