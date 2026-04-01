@@ -4,7 +4,6 @@ import androidx.lifecycle.viewModelScope
 import com.lukaslechner.coroutineusecasesonandroid.base.BaseViewModel
 import com.lukaslechner.coroutineusecasesonandroid.mock.MockApi
 import kotlinx.coroutines.launch
-import timber.log.Timber
 
 class RoomAndCoroutinesViewModel(
     private val api: MockApi,
@@ -17,10 +16,13 @@ class RoomAndCoroutinesViewModel(
         viewModelScope.launch {
             val localVersions = database.getAndroidVersions()
             if (localVersions.isEmpty()) {
-                uiState.value = UiState.Error(DataSource.DATABASE, "la base de datos esta vacia!!!")
+                uiState.value =
+                    UiState.Error(DataSource.DATABASE, "Database empty!")
             } else {
-                uiState.value = UiState.Success(DataSource.DATABASE, localVersions.mapToUiModelList())
+                uiState.value =
+                    UiState.Success(DataSource.DATABASE, localVersions.mapToUiModelList())
             }
+
             uiState.value = UiState.Loading.LoadFromNetwork
             try {
                 val recentVersions = api.getRecentAndroidVersions()
@@ -28,9 +30,8 @@ class RoomAndCoroutinesViewModel(
                     database.insert(version.mapToEntity())
                 }
                 uiState.value = UiState.Success(DataSource.NETWORK, recentVersions)
-            } catch (e: Exception) {
-                Timber.e(e)
-                uiState.value = UiState.Error(DataSource.NETWORK, "error en al solicitacion!!!")
+            } catch (exception: Exception) {
+                uiState.value = UiState.Error(DataSource.NETWORK, "Something went wrong!")
             }
         }
     }

@@ -14,43 +14,37 @@ class RetryNetworkRequestViewModel(
     fun performNetworkRequest() {
         uiState.value = UiState.Loading
         viewModelScope.launch {
-            val numberOfTries = 2
+            val numberOfRetries = 2
             try {
-                retry(numberOfTries) {
-                    loadRecentAndroidVersions()
+                retry(times = numberOfRetries) {
+                    val recentVersions = api.getRecentAndroidVersions()
+                    uiState.value = UiState.Success(recentVersions)
                 }
-                loadRecentAndroidVersions()
             } catch (e: Exception) {
-                Timber.e(e)
-                uiState.value = UiState.Error("error en la solicitacion!")
+                uiState.value = UiState.Error("Network Request failed")
             }
         }
     }
 
+    // retry with exponential backoff
+    // inspired by https://stackoverflow.com/questions/46872242/how-to-exponential-backoff-retry-on-kotlin-coroutines
     private suspend fun <T> retry(
-        numberOfRetries: Int,
+        times: Int,
         initialDelayMillis: Long = 100,
         maxDelayMillis: Long = 1000,
         factor: Double = 2.0,
         block: suspend () -> T
     ): T {
         var currentDelay = initialDelayMillis
-        repeat(numberOfRetries) {
+        repeat(times) {
             try {
-                block()
+                return block()
             } catch (exception: Exception) {
                 Timber.e(exception)
             }
             delay(currentDelay)
-            currentDelay = (currentDelay * factor)
-                .toLong()
-                .coerceAtMost(maxDelayMillis)
+            currentDelay = (currentDelay * factor).toLong().coerceAtMost(maxDelayMillis)
         }
-        return block()
-    }
-
-    private suspend fun loadRecentAndroidVersions() {
-        val recentAndroidVersions = api.getRecentAndroidVersions()
-        uiState.value = UiState.Success(recentAndroidVersions)
+        return block() // last attempt
     }
 }

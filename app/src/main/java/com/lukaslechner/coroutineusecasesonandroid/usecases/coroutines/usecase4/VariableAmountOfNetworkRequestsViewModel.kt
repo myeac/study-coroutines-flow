@@ -6,7 +6,6 @@ import com.lukaslechner.coroutineusecasesonandroid.mock.MockApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
-import timber.log.Timber
 
 class VariableAmountOfNetworkRequestsViewModel(
     private val mockApi: MockApi = mockApi()
@@ -21,9 +20,8 @@ class VariableAmountOfNetworkRequestsViewModel(
                     mockApi.getAndroidVersionFeatures(androidVersion.apiLevel)
                 }
                 uiState.value = UiState.Success(versionFeatures)
-            } catch (e: Exception) {
-                Timber.e(e)
-                uiState.value = UiState.Error("fallo al hacer al consulta")
+            } catch (exception: Exception) {
+                uiState.value = UiState.Error("Network Request failed")
             }
         }
     }
@@ -33,13 +31,13 @@ class VariableAmountOfNetworkRequestsViewModel(
         viewModelScope.launch {
             try {
                 val recentVersions = mockApi.getRecentAndroidVersions()
-                val versionFeatures = recentVersions.map { androidVersion ->
-                    async { mockApi.getAndroidVersionFeatures(androidVersion.apiLevel) }
-                }.awaitAll()
+                val versionFeatures = recentVersions
+                    .map { androidVersion ->
+                        async { mockApi.getAndroidVersionFeatures(androidVersion.apiLevel) }
+                    }.awaitAll()
                 uiState.value = UiState.Success(versionFeatures)
-            } catch (e: Exception) {
-                Timber.e(e)
-                uiState.value = UiState.Error("fallo al hacer al consulta")
+            } catch (exception: Exception) {
+                uiState.value = UiState.Error("Network Request failed")
             }
         }
     }
