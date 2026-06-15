@@ -14,37 +14,43 @@ class RetryNetworkRequestViewModel(
     fun performNetworkRequest() {
         uiState.value = UiState.Loading
         viewModelScope.launch {
-            val numberOfRetries = 2
+            val numberOfTries = 2
             try {
-                retry(times = numberOfRetries) {
-                    val recentVersions = api.getRecentAndroidVersions()
-                    uiState.value = UiState.Success(recentVersions)
+                retry(numberOfTries) {
+                    loadRecentAndroidVersions()
                 }
+                loadRecentAndroidVersions()
             } catch (e: Exception) {
-                uiState.value = UiState.Error("Network Request failed")
+                Timber.e(e)
+                uiState.value = UiState.Error("error en la solicitacion!")
             }
         }
     }
 
-    // retry with exponential backoff
-    // inspired by https://stackoverflow.com/questions/46872242/how-to-exponential-backoff-retry-on-kotlin-coroutines
     private suspend fun <T> retry(
-        times: Int,
+        numberOfRetries: Int,
         initialDelayMillis: Long = 100,
         maxDelayMillis: Long = 1000,
         factor: Double = 2.0,
         block: suspend () -> T
     ): T {
         var currentDelay = initialDelayMillis
-        repeat(times) {
+        repeat(numberOfRetries) {
             try {
-                return block()
+                block()
             } catch (exception: Exception) {
                 Timber.e(exception)
             }
             delay(currentDelay)
-            currentDelay = (currentDelay * factor).toLong().coerceAtMost(maxDelayMillis)
+            currentDelay = (currentDelay * factor)
+                .toLong()
+                .coerceAtMost(maxDelayMillis)
         }
-        return block() // last attempt
+        return block()
+    }
+
+    private suspend fun loadRecentAndroidVersions() {
+        val recentAndroidVersions = api.getRecentAndroidVersions()
+        uiState.value = UiState.Success(recentAndroidVersions)
     }
 }

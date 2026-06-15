@@ -2,42 +2,42 @@ package com.lukaslechner.coroutineusecasesonandroid.usecases.coroutines.usecase1
 
 import androidx.lifecycle.viewModelScope
 import com.lukaslechner.coroutineusecasesonandroid.base.BaseViewModel
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 import java.math.BigInteger
 import kotlin.system.measureTimeMillis
 
-class CalculationInBackgroundViewModel(
-    private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default
-) : BaseViewModel<UiState>() {
+class CalculationInBackgroundViewModel : BaseViewModel<UiState>() {
 
     fun performCalculation(factorialOf: Int) {
         uiState.value = UiState.Loading
-        viewModelScope.launch {
-            try {
-                var result: BigInteger = BigInteger.ZERO
-                val computationDuration = measureTimeMillis {
-                    result = calculateFactorialOf(factorialOf)
-                }
 
-                var resultString = ""
-                val stringConversionDuration = measureTimeMillis {
-                    resultString = convertToString(result)
-                }
+        viewModelScope.launch(context = Dispatchers.Default) {
 
-                uiState.value =
-                    UiState.Success(resultString, computationDuration, stringConversionDuration)
-            } catch (exception: Exception) {
-                UiState.Error("Error while calculating result")
+            Timber.d("coroutine context: $coroutineContext")
+
+            var result: BigInteger = BigInteger.ONE
+            val computationDuration = measureTimeMillis {
+                result = calculateFactorialOf(factorialOf)
             }
+
+            var resultString = ""
+            val stringConversionDuration = measureTimeMillis {
+                resultString =withContext(Dispatchers.Default){
+                    result.toString()
+                }
+            }
+
+            uiState.value =
+                UiState.Success(resultString, computationDuration, stringConversionDuration)
         }
     }
 
-    // factorial of n (n!) = 1 * 2 * 3 * 4 * ... * n
-    private suspend fun calculateFactorialOf(number: Int): BigInteger =
-        withContext(defaultDispatcher) {
+    private suspend fun calculateFactorialOf(number: Int)=
+
+        withContext(Dispatchers.Default){
             var factorial = BigInteger.ONE
             for (i in 1..number) {
                 factorial = factorial.multiply(BigInteger.valueOf(i.toLong()))
@@ -45,8 +45,5 @@ class CalculationInBackgroundViewModel(
             factorial
         }
 
-    private suspend fun convertToString(number: BigInteger): String =
-        withContext(defaultDispatcher) {
-            number.toString()
-        }
+
 }
